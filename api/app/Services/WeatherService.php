@@ -3,13 +3,18 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Jobs\UpdateUserWeather;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class WeatherService
 {
     protected $apiKey;
+    protected const CACHE_TTL = 3600; // 1 hour in seconds
+    protected const REQUEST_TIMEOUT = 0.5; // 500ms timeout
+    protected const CACHE_PREFIX = 'weather:';
 
     public function __construct()
     {
@@ -24,42 +29,59 @@ class WeatherService
         $weatherData = [];
 
         foreach ($users as $user) {
-            $cacheKey = "weather_{$user->id}";
+            $cacheKey = self::CACHE_PREFIX . $user->id;
             Log::info("Processing user {$user->id} with cache key: {$cacheKey}");
+            
+            try {
+                // Check if the weather data is cached and not expired
+                if ($cachedData = Redis::get($cacheKey)) {
+                    $cachedData = json_decode($cachedData, true);
+                    if ($this->isDataFresh($cachedData)) {
+                        $weatherData[] = $cachedData;
+                        continue;
+                    }
+                }
 
-            // Check if the weather data is cached
-            if (Cache::has($cacheKey)) {
-                Log::info("Cache hit for user {$user->id}");
-                $weatherData[] = Cache::get($cacheKey);
-                continue;
-            }
+                // If data is stale or missing, dispatch a job to update it
+                UpdateUserWeather::dispatch($user)->onQueue('weather');
 
-            Log::info("Cache miss for user {$user->id}, fetching from API");
-            // Fetch weather data from OpenWeatherMap API
-            $response = Http::get("https://api.openweathermap.org/data/2.5/weather", [
-                'lat' => $user->latitude,
-                'lon' => $user->longitude,
-                'appid' => $this->apiKey,
-                'units' => 'imperial',
-            ]);
-
-            if ($response->successful()) {
-                $weatherInfo = $response->json();
-                $userWeatherInfo = [
+                // Return cached data if available, even if stale
+                if ($cachedData) {
+                    $weatherData[] = $cachedData;
+                } else {
+                    // If no cache available, return basic user info
+                    $weatherData[] = [
+                        'name' => $user->name,
+                        'icon' => $user->profile_picture,
+                        'weatherInfo' => null,
+                        'error' => 'Weather data temporarily unavailable',
+                        'last_updated' => null,
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::error("Error fetching weather for user {$user->id}: " . $e->getMessage());
+                $weatherData[] = [
                     'name' => $user->name,
                     'icon' => $user->profile_picture,
-                    'weatherInfo' => $weatherInfo,
+                    'weatherInfo' => null,
+                    'error' => 'Weather data temporarily unavailable',
+                    'last_updated' => null,
                 ];
-
-                // Cache the weather data for 45 minutes
-                Cache::put($cacheKey, $userWeatherInfo, 45 * 60);
-                Log::info("Successfully cached weather data for user {$user->id}");
-                $weatherData[] = $userWeatherInfo;
-            } else {
-                Log::error("Failed to fetch weather for user {$user->id}: " . $response->body());
             }
         }
 
         return $weatherData;
+    }
+
+    protected function isDataFresh($data): bool
+    {
+        if (!isset($data['last_updated'])) {
+            return false;
+        }
+
+        $lastUpdated = $data['last_updated'];
+        $oneHourAgo = now()->subHour()->timestamp;
+        
+        return $lastUpdated >= $oneHourAgo;
     }
 }
