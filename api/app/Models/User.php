@@ -20,6 +20,11 @@ class User extends Authenticatable
         'email',
         'password',
     ];
+    
+    public function weatherInfo()
+    {
+        return $this->hasOne(WeatherInfo::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
