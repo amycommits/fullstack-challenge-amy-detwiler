@@ -54,7 +54,13 @@ Once completed:
   - Migrate database: `php artisan migrate` 
   - Seed database: `php artisan db:seed`
   - Run tests: `php artisan test`
+  - Start queue worker: `php artisan queue:work --queue=weather`
 - Visit api: `http://localhost`
+
+Note: The queue worker needs to be running in a separate terminal window to process weather updates. You can run it in the background using:
+```bash
+docker exec -it fullstack-challenge-app-1 php artisan queue:work --queue=weather --daemon
+```
 
 ### Frontend
 - Navigate to `/frontend` folder

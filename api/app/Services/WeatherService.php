@@ -14,7 +14,7 @@ class WeatherService
     protected $apiKey;
     protected const CACHE_TTL = 3600; // 1 hour in seconds
     protected const REQUEST_TIMEOUT = 0.5; // 500ms timeout
-    protected const CACHE_PREFIX = 'weather:';
+    protected const REDIS_PREFIX = 'weather:';
 
     public function __construct()
     {
@@ -29,12 +29,13 @@ class WeatherService
         $weatherData = [];
 
         foreach ($users as $user) {
-            $cacheKey = self::CACHE_PREFIX . $user->id;
+            $cacheKey = self::REDIS_PREFIX . $user->id;
             Log::info("Processing user {$user->id} with cache key: {$cacheKey}");
             
             try {
-                // Check if the weather data is cached and not expired
-                if ($cachedData = Redis::get($cacheKey)) {
+                // Check Redis for cached data
+                $cachedData = Redis::get($cacheKey);
+                if ($cachedData) {
                     $cachedData = json_decode($cachedData, true);
                     if ($this->isDataFresh($cachedData)) {
                         $weatherData[] = $cachedData;
@@ -42,30 +43,29 @@ class WeatherService
                     }
                 }
 
-                // If data is stale or missing, dispatch a job to update it
+                // If no fresh data, dispatch job to update weather
                 UpdateUserWeather::dispatch($user)->onQueue('weather');
 
                 // Return cached data if available, even if stale
                 if ($cachedData) {
                     $weatherData[] = $cachedData;
                 } else {
-                    // If no cache available, return basic user info
                     $weatherData[] = [
                         'name' => $user->name,
                         'icon' => $user->profile_picture,
                         'weatherInfo' => null,
                         'error' => 'Weather data temporarily unavailable',
-                        'last_updated' => null,
+                        'last_updated' => now()->timestamp,
                     ];
                 }
             } catch (\Exception $e) {
-                Log::error("Error fetching weather for user {$user->id}: " . $e->getMessage());
+                Log::error("Error processing weather for user {$user->id}: " . $e->getMessage());
                 $weatherData[] = [
                     'name' => $user->name,
                     'icon' => $user->profile_picture,
                     'weatherInfo' => null,
                     'error' => 'Weather data temporarily unavailable',
-                    'last_updated' => null,
+                    'last_updated' => now()->timestamp,
                 ];
             }
         }
