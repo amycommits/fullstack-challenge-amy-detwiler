@@ -47,6 +47,7 @@ class WeatherService
                 $weatherInfo = $response->json();
                 $userWeatherInfo = [
                     'name' => $user->name,
+                    'icon' => $user->profile_picture,
                     'weatherInfo' => $weatherInfo,
                 ];
 

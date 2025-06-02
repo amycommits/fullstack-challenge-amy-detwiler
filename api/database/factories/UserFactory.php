@@ -11,6 +11,17 @@ use Illuminate\Support\Str;
 class UserFactory extends Factory
 {
     /**
+     * Get a random profile picture URL
+     *
+     * @return string
+     */
+    protected function getRandomProfilePicture(): string
+    {
+        $gender = fake()->randomElement(['male', 'female']);
+        return "https://xsgames.co/randomusers/avatar.php?g={$gender}";
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
@@ -25,6 +36,7 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'longitude' => fake()->longitude(),
             'latitude' => fake()->latitude(),
+            'profile_picture' => $this->getRandomProfilePicture(),
         ];
     }
 }

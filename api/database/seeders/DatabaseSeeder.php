@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'test1@example.com',
             'password' => Hash::make('password'),
             'latitude' => 40.7128,  // New York City
-            'longitude' => -74.0060
+            'longitude' => -74.0060,
+            'profile_picture' => 'https://xsgames.co/randomusers/avatar.php?g=male'
         ]);
 
         User::create([
@@ -29,7 +30,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'test2@example.com',
             'password' => Hash::make('password'),
             'latitude' => 51.5074,  // London
-            'longitude' => -0.1278
+            'longitude' => -0.1278,
+            'profile_picture' => 'https://xsgames.co/randomusers/avatar.php?g=female'
         ]);
 
         User::create([
@@ -37,7 +39,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'test3@example.com',
             'password' => Hash::make('password'),
             'latitude' => 35.6762,  // Tokyo
-            'longitude' => 139.6503
+            'longitude' => 139.6503,
+            'profile_picture' => 'https://xsgames.co/randomusers/avatar.php?g=male'
         ]);
     }
 }
