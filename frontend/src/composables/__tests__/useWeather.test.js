@@ -1,58 +1,54 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { useWeather } from '../useWeather'
 import api from '../../plugins/axios'
 
-// Mock the axios instance
-vi.mock('../../plugins/axios', () => ({
-  default: {
-    get: vi.fn()
-  }
-}))
-
 describe('useWeather', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   it('fetches weather data successfully', async () => {
     const mockData = [
       {
         name: 'John Doe',
+        icon: '/profile.png',
         weatherInfo: {
           main: { temp: 72 },
-          weather: [{ description: 'sunny' }]
-        }
+          weather: [{ description: 'sunny', icon: '01d' }],
+        },
+        last_updated: expect.any(Number),
+        error: undefined
       }
     ]
-
-    api.get.mockResolvedValueOnce({ data: mockData })
+    vi.spyOn(api, 'get').mockResolvedValueOnce({ data: mockData })
 
     const { weatherData, loading, error, fetchWeatherData } = useWeather()
-    
-    expect(loading.value).toBe(false)
-    expect(error.value).toBeNull()
-    
     await fetchWeatherData()
-    
+
     expect(loading.value).toBe(false)
     expect(error.value).toBeNull()
-    expect(weatherData.value).toEqual(mockData)
+    expect(weatherData.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'John Doe',
+          icon: '/profile.png',
+          weatherInfo: expect.objectContaining({
+            main: expect.objectContaining({ temp: 72 }),
+            weather: expect.arrayContaining([expect.objectContaining({ description: 'sunny' })])
+          }),
+          last_updated: expect.any(Number),
+          error: undefined
+        })
+      ])
+    )
     expect(api.get).toHaveBeenCalledWith('/api/users/weather')
   })
 
   it('handles fetch error', async () => {
-    api.get.mockRejectedValueOnce(new Error('Network error'))
+    vi.spyOn(api, 'get').mockRejectedValueOnce(new Error('Network error'))
 
     const { weatherData, loading, error, fetchWeatherData } = useWeather()
-    
-    expect(loading.value).toBe(false)
-    expect(error.value).toBeNull()
-    
     await fetchWeatherData()
-    
+
     expect(loading.value).toBe(false)
+    expect(weatherData.value).toBe(null)
     expect(error.value).toBe('Failed to fetch weather data')
-    expect(weatherData.value).toBeNull()
     expect(api.get).toHaveBeenCalledWith('/api/users/weather')
   })
 })

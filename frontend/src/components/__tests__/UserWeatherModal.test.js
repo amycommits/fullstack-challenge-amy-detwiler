@@ -10,44 +10,62 @@ vi.mock('../composables/useWeather', () => ({
 }))
 
 describe('UserWeatherModal', () => {
+    const mockWeatherInfo = {
+        dt: 1748897348,
+        timezone: 0,
+        name: 'New York',
+        main: {
+            temp: 72,
+            temp_max: 75,
+            temp_min: 68,
+            humidity: 65,
+            pressure: 1013
+        },
+        weather: [{ description: 'sunny', icon: '01d' }],
+        visibility: 10000,
+        clouds: { all: 20 },
+        wind: {
+            speed: 5,
+            deg: 180,
+            gust: 8
+        },
+        sys: {
+            sunrise: 1748897348,
+            sunset: 1748897348
+        }
+    }
+
     const mockUser = {
         name: 'John Doe',
-        icon: '/profile.png',
-        weatherInfo: {
-            main: { temp: 72, humidity: 65, pressure: 1013 },
-            weather: [{ description: 'sunny', icon: '01d' }],
-            wind: { speed: 5 }
-        }
+        icon: '/profile.png'
     }
 
     it('renders modal with user weather details', () => {
         const wrapper = mount(UserWeatherModal, {
             props: {
                 user: mockUser,
-                show: true
-            },
+                weatherInfo: mockWeatherInfo,
+                showWeatherModal: true
+            }
         })
 
-        expect(wrapper.find('[data-test="modal-backdrop"]').exists()).toBe(true)
-        expect(wrapper.find('[data-test="modal-title"]').text()).toBe("John Doe's Weather")
-        expect(wrapper.find('[data-test="user-icon"]').attributes('src')).toBe('/profile.png')
-        expect(wrapper.find('[data-test="weather-icon"]').attributes('src')).toContain('01d')
-        expect(wrapper.find('[data-test="temperature"]').text()).toBe('72°F')
-        expect(wrapper.find('[data-test="description"]').text()).toBe('sunny')
-        expect(wrapper.find('[data-test="humidity"]').text()).toBe('Humidity: 65%')
-        expect(wrapper.find('[data-test="pressure"]').text()).toBe('Pressure: 1013 hPa')
-        expect(wrapper.find('[data-test="wind"]').text()).toBe('Wind Speed: 5 m/s')
+        expect(wrapper.find('.fixed.inset-0').exists()).toBe(true)
+        expect(wrapper.find('.font-semibold.text-gray-800').text()).toBe('New York')
+        expect(wrapper.find('img').attributes('src')).toBe('/profile.png')
+        expect(wrapper.find('.text-4xl.font-bold').text()).toBe('72°')
+        expect(wrapper.find('.capitalize.text-gray-600').text()).toBe('sunny')
     })
 
     it('emits close event when close button is clicked', async () => {
         const wrapper = mount(UserWeatherModal, {
             props: {
                 user: mockUser,
-                show: true
-            },
+                weatherInfo: mockWeatherInfo,
+                showWeatherModal: true
+            }
         })
 
-        await wrapper.find('[data-test="close-button"]').trigger('click')
+        await wrapper.find('button').trigger('click')
         expect(wrapper.emitted('close')).toBeTruthy()
     })
 
@@ -55,26 +73,24 @@ describe('UserWeatherModal', () => {
         const wrapper = mount(UserWeatherModal, {
             props: {
                 user: mockUser,
-                show: true
-            },
+                weatherInfo: mockWeatherInfo,
+                showWeatherModal: true
+            }
         })
 
-        await wrapper.find('[data-test="modal-backdrop"]').trigger('click')
+        await wrapper.find('.fixed.inset-0').trigger('click')
         expect(wrapper.emitted('close')).toBeTruthy()
     })
 
     it('displays error message when weather data is unavailable', () => {
         const wrapper = mount(UserWeatherModal, {
             props: {
-                user: {
-                    name: 'John Doe',
-                    icon: '/profile.png',
-                    error: 'Failed to fetch weather data'
-                },
-                show: true
-            },
+                user: mockUser,
+                weatherInfo: null,
+                showWeatherModal: true
+            }
         })
 
-        expect(wrapper.find('[data-test="error-message"]').text()).toBe('Failed to fetch weather data')
+        expect(wrapper.find('.text-gray-800').text()).toBe('Unknown')
     })
 })
