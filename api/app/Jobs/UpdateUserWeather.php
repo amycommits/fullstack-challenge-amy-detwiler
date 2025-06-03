@@ -56,8 +56,6 @@ class UpdateUserWeather implements ShouldQueue
                     3600, // 1 hour TTL
                     json_encode($userWeatherInfo)
                 );
-
-                Log::info("Successfully updated weather data for user {$this->user->id}");
             } else {
                 Log::error("Failed to fetch weather for user {$this->user->id}: " . $response->body());
             }

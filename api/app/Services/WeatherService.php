@@ -19,18 +19,15 @@ class WeatherService
     public function __construct()
     {
         $this->apiKey = env('OPENWEATHER_API_KEY');
-        Log::info('WeatherService initialized with API key: ' . substr($this->apiKey, 0, 4) . '...');
     }
 
     public function fetchWeatherForUsers()
     {
         $users = User::all();
-        Log::info('Found ' . $users->count() . ' users');
         $weatherData = [];
 
         foreach ($users as $user) {
             $cacheKey = self::REDIS_PREFIX . $user->id;
-            Log::info("Processing user {$user->id} with cache key: {$cacheKey}");
             
             try {
                 // Check Redis for cached data
@@ -80,8 +77,7 @@ class WeatherService
         }
 
         $lastUpdated = $data['last_updated'];
-        $oneHourAgo = now()->subHour()->timestamp;
-        
-        return $lastUpdated >= $oneHourAgo;
+        $now = now()->timestamp;
+        return ($now - $lastUpdated) < self::CACHE_TTL;
     }
 }

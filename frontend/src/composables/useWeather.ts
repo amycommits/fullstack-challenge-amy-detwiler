@@ -41,7 +41,6 @@ interface User {
 
 const getTemperatureUnit = () => {
   const unit = import.meta.env.OPENWEATHER_UNIT || 'imperial'
-  console.log('Temperature unit from env:', unit)
   switch (unit) {
     case 'metric':
       return '°C'
@@ -63,9 +62,7 @@ export function useWeather() {
     error.value = null
     
     try {
-      console.log('Fetching weather data...')
       const response = await api.get<User[]>('/api/users/weather')
-      console.log('Weather data response:', response.data)
       
       // Ensure each user has the required properties
       weatherData.value = response.data.map(user => ({
