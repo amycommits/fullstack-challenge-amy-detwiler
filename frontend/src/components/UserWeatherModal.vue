@@ -64,31 +64,4 @@ function closeModal() {
 }
 
 const location = computed(() => props.weatherInfo?.name || 'Unknown')
-
-const lastUpdated = computed(() => {
-  if (!props.weatherInfo?.dt) return 'Unknown'
-  
-  const localTimestamp = props.weatherInfo.dt + props.weatherInfo.timezone
-  const date = new Date(localTimestamp * 1000)
-  
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'UTC'
-  })
-})
-
-const currentTemp = computed(() => Math.round(props.weatherInfo?.main?.temp || 0))
-const maxTemp = computed(() => Math.round(props.weatherInfo?.main?.temp_max || 0))
-const minTemp = computed(() => Math.round(props.weatherInfo?.main?.temp_min || 0))
-
-const weatherDescription = computed(() => 
-  props.weatherInfo?.weather?.[0]?.description || 'Unknown'
-)
-
-// Set default icon to profile.png from public folder
-const userIcon = computed(() => props.user.icon || '/profile.png')
 </script>

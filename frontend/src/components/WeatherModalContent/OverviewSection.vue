@@ -74,4 +74,10 @@ const lastUpdated = computed(() => {
 
 // Set default icon to profile.png from public folder
 const userIcon = computed(() => props.user.icon || '/profile.png')
+</script>
+
+<script lang="ts">
+export default {
+  name: 'OverviewSection'
+}
 </script> 

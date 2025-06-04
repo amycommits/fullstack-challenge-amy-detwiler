@@ -22,10 +22,6 @@
 import { computed } from 'vue'
 import type { WeatherInfo } from '../../types/weather'
 
-defineOptions({
-  name: 'WindDetails'
-})
-
 const props = defineProps<{
   weatherInfo?: WeatherInfo;
 }>()
@@ -33,4 +29,10 @@ const props = defineProps<{
 const windSpeed = computed(() => props.weatherInfo?.wind?.speed || 0)
 const windDirection = computed(() => props.weatherInfo?.wind?.deg || 0)
 const windGust = computed(() => props.weatherInfo?.wind?.gust || 'N/A')
+</script>
+
+<script lang="ts">
+export default {
+  name: 'WindDetails'
+}
 </script> 

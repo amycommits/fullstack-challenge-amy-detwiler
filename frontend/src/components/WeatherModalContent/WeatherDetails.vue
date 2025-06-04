@@ -40,10 +40,6 @@
 import { computed } from 'vue'
 import type { WeatherInfo } from '../../types/weather'
 
-defineOptions({
-  name: 'WeatherDetails'
-})
-
 const props = defineProps<{
   weatherInfo?: WeatherInfo;
 }>()
@@ -53,4 +49,10 @@ const snowAmount = computed(() => props.weatherInfo?.snow?.['1h'] || null)
 const humidity = computed(() => props.weatherInfo?.main?.humidity || 0)
 const visibility = computed(() => (props.weatherInfo?.visibility || 0) / 1000)
 const cloudiness = computed(() => props.weatherInfo?.clouds?.all || 0)
+</script>
+
+<script lang="ts">
+export default {
+  name: 'WeatherDetails'
+}
 </script> 

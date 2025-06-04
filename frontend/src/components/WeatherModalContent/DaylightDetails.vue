@@ -18,10 +18,6 @@
 import { computed } from 'vue'
 import type { WeatherInfo } from '../../types/weather'
 
-defineOptions({
-  name: 'DaylightDetails'
-})
-
 const props = defineProps<{
   weatherInfo?: WeatherInfo;
 }>()
@@ -41,4 +37,10 @@ const formatTime = (timestamp: number | undefined) => {
 
 const sunriseTime = computed(() => formatTime(props.weatherInfo?.sys?.sunrise))
 const sunsetTime = computed(() => formatTime(props.weatherInfo?.sys?.sunset))
+</script>
+
+<script lang="ts">
+export default {
+  name: 'DaylightDetails'
+}
 </script> 
