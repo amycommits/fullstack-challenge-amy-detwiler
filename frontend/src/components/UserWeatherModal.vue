@@ -27,42 +27,7 @@
 
       <!-- Scrollable Content -->
       <div class="p-6 overflow-y-auto">
-        <!-- Overview Section -->
-        <div class="flex justify-between items-start mb-6">
-          <!-- Left: Weather Overview -->
-          <div>
-            <div class="text-4xl font-bold text-gray-800">
-              {{ currentTemp }}°
-            </div>
-            <div class="capitalize text-gray-600">
-              {{ weatherDescription }}
-            </div>
-            <div class="flex items-center space-x-2 mt-2 text-sm text-gray-500">
-              <span class="flex items-center">
-                ⬆ {{ maxTemp }}°
-              </span>
-              /
-              <span class="flex items-center">
-                ⬇ {{ minTemp }}°
-              </span>
-            </div>
-          </div>
-
-          <!-- Right: User Info -->
-          <div class="text-center">
-            <img
-              :src="userIcon"
-              alt="User"
-              class="w-20 h-20 rounded-full mx-auto mb-2"
-            />
-            <div class="font-semibold text-gray-800">{{ user.name }}</div>
-            <div class="text-xs text-gray-500">
-              Last updated {{ lastUpdated }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Weather Details Components -->
+        <OverviewSection :weather-info="weatherInfo" :user="user" />
         <WeatherDetails :weather-info="weatherInfo" />
         <WindDetails :weather-info="weatherInfo" />
         <DaylightDetails :weather-info="weatherInfo" />
@@ -77,6 +42,7 @@ import type { WeatherInfo } from '../types/weather'
 import WeatherDetails from './WeatherModalContent/WeatherDetails.vue'
 import WindDetails from './WeatherModalContent/WindDetails.vue'
 import DaylightDetails from './WeatherModalContent/DaylightDetails.vue'
+import OverviewSection from './WeatherModalContent/OverviewSection.vue'
 
 interface User {
   name: string;
