@@ -22,13 +22,17 @@
 
     <!-- Right Section -->
     <div v-if="!hasError" class="flex items-center space-x-4">
-      <div class="text-center">
+      <div v-if="weatherData" class="text-center">
         <p class="text-xl font-semibold">
-          {{ Math.round(weatherInfo.main.temp) }}°
+          {{ formattedTemperature }}
         </p>
-        <p class="text-sm capitalize">{{ weatherInfo.weather[0].description }}</p>
+        <p class="text-sm capitalize">{{ weatherData.description }}</p>
+      </div>
+      <div v-else class="text-center">
+        <p class="text-sm text-gray-500">Loading weather data...</p>
       </div>
       <img
+        v-if="hasWeatherIcon"
         :src="weatherIcon"
         alt="Weather Icon"
         class="w-12 h-12"
@@ -47,13 +51,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import UserWeatherModal from './UserWeatherModal.vue'
+import UserWeatherModal from "./UserWeatherModal.vue";
 
 interface WeatherInfo {
-  main: {
+  main?: {
     temp: number;
   };
-  weather: Array<{
+  weather?: Array<{
     description: string;
     icon: string;
   }>;
@@ -69,7 +73,7 @@ interface User {
 
 const props = defineProps<{
   user: User;
-  weatherInfo: WeatherInfo;
+  weatherInfo?: WeatherInfo;
 }>()
 
 // Set default icon to profile.png from public folder
@@ -102,4 +106,30 @@ const userLocation = computed(() => {
 })
 
 const hasError = computed(() => !!props.user.error)
+
+const hasWeatherInfo = computed(() => 
+  !hasError.value && 
+  !!props.weatherInfo?.main && 
+  !!props.weatherInfo?.weather?.[0]
+)
+
+const weatherData = computed(() => {
+  if (!hasWeatherInfo.value || !props.weatherInfo) return null;
+  const temp = props.weatherInfo.main?.temp;
+  const description = props.weatherInfo.weather?.[0]?.description;
+  if (typeof temp !== 'number' || !description) return null;
+  return {
+    temp,
+    description
+  };
+});
+
+const formattedTemperature = computed(() => {
+  if (!weatherData.value) return '';
+  return `${Math.round(weatherData.value.temp)}°`;
+});
+
+const hasWeatherIcon = computed(() => 
+  !!props.weatherInfo?.weather?.[0]?.icon
+);
 </script>

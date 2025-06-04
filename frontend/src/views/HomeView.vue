@@ -21,13 +21,12 @@ onMounted(() => {
       <div v-else-if="error" class="error">
         {{ error }}
       </div>
-      
       <div v-else-if="weatherData" class="weather-data">
         <UserCard
           v-for="user in weatherData"
           :key="user.name"
           :user="user"
-          :weatherInfo="user.weatherInfo"
+          :weatherInfo="user.weatherInfo || undefined"
         />
       </div>
     </div>
