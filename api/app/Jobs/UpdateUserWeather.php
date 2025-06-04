@@ -35,11 +35,11 @@ class UpdateUserWeather implements ShouldQueue
     {
         try {
             $response = Http::timeout(self::REQUEST_TIMEOUT)
-                ->get("https://api.openweathermap.org/data/2.5/weather", [
+                ->get(config('weather.base_url'), [
                     'lat' => $this->user->latitude,
                     'lon' => $this->user->longitude,
-                    'appid' => env('OPENWEATHER_API_KEY'),
-                    'units' => 'imperial',
+                    'appid' => config('weather.api_key'),
+                    'units' => config('weather.units'),
                 ]);
 
             if ($response->successful()) {
@@ -53,7 +53,7 @@ class UpdateUserWeather implements ShouldQueue
 
                 Redis::setex(
                     self::REDIS_PREFIX . $this->user->id,
-                    3600, // 1 hour TTL
+                    config('weather.cache_ttl'),
                     json_encode($userWeatherInfo)
                 );
             } else {
