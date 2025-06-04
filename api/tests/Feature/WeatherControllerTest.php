@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\User;
-use Illuminate\Support\Facades\Redis;
+use App\Services\WeatherService;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Jobs\UpdateUserWeather;
 
 class WeatherControllerTest extends TestCase
 {
@@ -14,7 +16,6 @@ class WeatherControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Redis::flushall();
     }
 
     public function test_get_users_weather_returns_correct_data()
@@ -22,24 +23,22 @@ class WeatherControllerTest extends TestCase
         // Create test users
         $users = User::factory()->count(3)->create();
 
-        // Mock weather data in Redis
-        foreach ($users as $user) {
-            $weatherData = [
-                'name' => $user->name,
-                'icon' => $user->profile_picture,
-                'weatherInfo' => [
-                    'main' => ['temp' => 70],
-                    'weather' => [['description' => 'sunny', 'icon' => '01d']],
-                ],
-                'last_updated' => now()->timestamp,
-            ];
-
-            Redis::setex(
-                'weather:' . $user->id,
-                3600,
-                json_encode($weatherData)
-            );
-        }
+        // Mock the WeatherService
+        $this->mock(WeatherService::class, function ($mock) use ($users) {
+            $mock->shouldReceive('fetchWeatherForUsers')
+                ->once()
+                ->andReturn($users->map(function ($user) {
+                    return [
+                        'name' => $user->name,
+                        'icon' => $user->profile_picture,
+                        'weatherInfo' => [
+                            'main' => ['temp' => 70],
+                            'weather' => [['description' => 'sunny', 'icon' => '01d']],
+                        ],
+                        'last_updated' => now()->timestamp,
+                    ];
+                })->toArray());
+        });
 
         // Make request
         $response = $this->getJson('/api/users/weather');
@@ -62,8 +61,22 @@ class WeatherControllerTest extends TestCase
 
     public function test_get_users_weather_handles_no_data()
     {
-        // Create test users but don't add weather data
-        User::factory()->count(3)->create();
+        // Create test users
+        $users = User::factory()->count(3)->create();
+
+        // Mock the WeatherService to return error data
+        $this->mock(WeatherService::class, function ($mock) use ($users) {
+            $mock->shouldReceive('fetchWeatherForUsers')
+                ->once()
+                ->andReturn($users->map(function ($user) {
+                    return [
+                        'name' => $user->name,
+                        'icon' => $user->profile_picture,
+                        'error' => 'No weather data available',
+                        'last_updated' => now()->timestamp,
+                    ];
+                })->toArray());
+        });
 
         // Make request
         $response = $this->getJson('/api/users/weather');

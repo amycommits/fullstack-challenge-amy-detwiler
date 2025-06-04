@@ -16,7 +16,6 @@ class UpdateUserWeatherTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Redis::flushall();
     }
 
     public function test_job_updates_weather_data_successfully()
@@ -32,19 +31,22 @@ class UpdateUserWeatherTest extends TestCase
             ], 200),
         ]);
 
+        // Mock Redis setex
+        Redis::shouldReceive('setex')
+            ->once()
+            ->withArgs(function ($key, $ttl, $value) use ($user) {
+                $data = json_decode($value, true);
+                return $key === 'weather:' . $user->id
+                    && $ttl === 3600
+                    && $data['name'] === $user->name
+                    && $data['icon'] === $user->profile_picture
+                    && isset($data['weatherInfo'])
+                    && isset($data['last_updated']);
+            });
+
         // Run the job
         $job = new UpdateUserWeather($user);
         $job->handle();
-
-        // Assert Redis has the data
-        $cachedData = Redis::get('weather:' . $user->id);
-        $this->assertNotNull($cachedData);
-
-        $decodedData = json_decode($cachedData, true);
-        $this->assertEquals($user->name, $decodedData['name']);
-        $this->assertEquals($user->profile_picture, $decodedData['icon']);
-        $this->assertNotNull($decodedData['weatherInfo']);
-        $this->assertNotNull($decodedData['last_updated']);
     }
 
     public function test_job_handles_api_failure_gracefully()
@@ -57,12 +59,12 @@ class UpdateUserWeatherTest extends TestCase
             'api.openweathermap.org/*' => Http::response([], 500),
         ]);
 
+        // Mock Redis setex - should not be called
+        Redis::shouldReceive('setex')
+            ->never();
+
         // Run the job
         $job = new UpdateUserWeather($user);
         $job->handle();
-
-        // Assert Redis doesn't have new data
-        $cachedData = Redis::get('weather:' . $user->id);
-        $this->assertNull($cachedData);
     }
 } 
